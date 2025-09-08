@@ -2,10 +2,14 @@ import { SERVICE_CONFIG } from '@/config/api';
 import { ServiceMode, ServiceFactory } from '@/types/api';
 import { supplierService } from './supplierService'; // Mock service
 import { ApiSupplierService } from './api/ApiSupplierService'; // API service
+import { MockRFQService } from './mock/MockRFQService'; // Mock RFQ service
+import { ApiRFQService } from './api/ApiRFQService'; // API RFQ service
 
 // Service Factory for switching between Mock and API implementations
 class ServiceFactoryImpl implements ServiceFactory {
   private apiSupplierService: ApiSupplierService | null = null;
+  private mockRFQService: MockRFQService | null = null;
+  private apiRFQService: ApiRFQService | null = null;
 
   // Get current service mode
   private getMode(): ServiceMode {
@@ -32,16 +36,22 @@ class ServiceFactoryImpl implements ServiceFactory {
     return this.createSupplierService(mode);
   }
 
-  // Create RFQ service (placeholder for future implementation)
+  // Create RFQ service
   createRFQService(mode?: ServiceMode) {
     const serviceMode = mode || this.getMode();
     
     if (serviceMode === 'mock') {
-      // Return mock RFQ service when implemented
-      return null; // TODO: Implement mock RFQ service
+      // Create mock RFQ service instance if needed
+      if (!this.mockRFQService) {
+        this.mockRFQService = new MockRFQService();
+      }
+      return this.mockRFQService;
     } else {
-      // Return API RFQ service when implemented
-      return null; // TODO: Implement API RFQ service
+      // Create API RFQ service instance if needed
+      if (!this.apiRFQService) {
+        this.apiRFQService = new ApiRFQService();
+      }
+      return this.apiRFQService;
     }
   }
 

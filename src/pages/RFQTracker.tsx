@@ -10,6 +10,7 @@ import { ExpandableRFQRow } from "@/components/ExpandableRFQRow";
 import { Search, FileText, TrendingUp, Clock, CheckCircle, AlertCircle, X, Filter } from "lucide-react";
 import { RFQRecord, LineItem } from "@/types/rfq";
 import { useToast } from "@/hooks/use-toast";
+import { useRFQs, useRFQStats, useUpdateLineItem } from "@/hooks/useRFQs";
 
 // RFQ Filters interface
 export interface RFQFilters {
@@ -25,158 +26,27 @@ export default function RFQTracker() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<RFQFilters>({});
   const [showFilters, setShowFilters] = useState(false);
-  const [rfqs, setRfqs] = useState<RFQRecord[]>([
-    {
-      id: "1",
-      rfqNo: "RFQ-2024-001",
-      client: "TechCorp Inc",
-      publishDate: "2024-01-15",
-      bidDate: "2024-01-25",
-      status: "open",
-      lastUpdated: "2024-01-16",
-      isExpanded: false,
-      lineItems: [
-        {
-          id: "li-1-1",
-          lineNumber: "LI001",
-          itemId: "901366446",
-          manufacturer: "CLA-VAL COMPANY",
-          supplier: "",
-          email: "info@cla-val.com",
-          status: "open",
-          qty: 5
-        },
-        {
-          id: "li-1-2", 
-          lineNumber: "LI002",
-          itemId: "901366447",
-          manufacturer: "ABB",
-          supplier: "XYZ Supplier",
-          email: "sales@xyz.com",
-          status: "quote_received",
-          qty: 10
-        },
-        {
-          id: "li-1-3",
-          lineNumber: "LI003", 
-          itemId: "901366448",
-          manufacturer: "ABB",
-          supplier: "ABC Supplier",
-          email: "abc@abc.com",
-          status: "open",
-          qty: 3
-        }
-      ]
-    },
-    {
-      id: "2", 
-      rfqNo: "RFQ-2024-002",
-      client: "ManufacturingCo Ltd",
-      publishDate: "2024-01-14",
-      bidDate: "2024-01-24",
-      status: "submitted",
-      lastUpdated: "2024-01-20",
-      isExpanded: false,
-      lineItems: [
-        {
-          id: "li-2-1",
-          lineNumber: "LI001",
-          itemId: "BOLT-M8-100", 
-          manufacturer: "ACME Manufacturing",
-          supplier: "TechSupply Co",
-          email: "orders@techsupply.com",
-          status: "submitted",
-          qty: 100
-        },
-        {
-          id: "li-2-2",
-          lineNumber: "LI002",
-          itemId: "WASHER-M8",
-          manufacturer: "ACME Manufacturing", 
-          supplier: "TechSupply Co",
-          email: "orders@techsupply.com",
-          status: "submitted",
-          qty: 100
-        }
-      ]
-    },
-    {
-      id: "3",
-      rfqNo: "RFQ-2024-003", 
-      client: "BuildRight Solutions",
-      publishDate: "2024-01-13",
-      bidDate: "2024-01-23",
-      status: "pending",
-      lastUpdated: "2024-01-18",
-      isExpanded: false,
-      lineItems: [
-        {
-          id: "li-3-1",
-          lineNumber: "LI001",
-          itemId: "PLATE-STEEL-10MM",
-          manufacturer: "SteelWorks Inc",
-          supplier: "MetalSupplies Ltd",
-          email: "sales@metalsupplies.com",
-          status: "quote_received",
-          qty: 10
-        }
-      ]
-    },
-    {
-      id: "4",
-      rfqNo: "RFQ-2024-004",
-      client: "Industrial Systems",
-      publishDate: "2024-01-10",
-      bidDate: "2024-01-20",
-      status: "closed",
-      lastUpdated: "2024-01-21",
-      isExpanded: false,
-      lineItems: [
-        {
-          id: "li-4-1",
-          lineNumber: "LI001",
-          itemId: "BRACKET-L90",
-          manufacturer: "Precision Parts Ltd",
-          supplier: "Industrial Parts Co",
-          email: "info@industrialparts.com",
-          status: "closed",
-          qty: 25
-        },
-        {
-          id: "li-4-2",
-          lineNumber: "LI002",
-          itemId: "SCREW-M6-50", 
-          manufacturer: "Precision Parts Ltd",
-          supplier: "Industrial Parts Co",
-          email: "info@industrialparts.com",
-          status: "closed",
-          qty: 50
-        }
-      ]
-    },
-    {
-      id: "5",
-      rfqNo: "RFQ-2024-005",
-      client: "MetalWorks Corp",
-      publishDate: "2024-01-12",
-      bidDate: "2024-01-22",
-      status: "open",
-      lastUpdated: "2024-01-17",
-      isExpanded: false,
-      lineItems: [
-        {
-          id: "li-5-1",
-          lineNumber: "LI001",
-          itemId: "ROD-STEEL-8MM",
-          manufacturer: "SteelWorks Inc",
-          supplier: "",
-          email: "",
-          status: "open",
-          qty: 20
-        }
-      ]
-    }
-  ]);
+  const [expandedRFQs, setExpandedRFQs] = useState<Set<string>>(new Set());
+
+  // Use RFQ hooks with proper typing
+  const rfqFilters = {
+    ...filters,
+    search: searchTerm,
+    // Map RFQ status to supplier FilterParams format if needed
+    status: filters.status === 'all' ? undefined : filters.status
+  };
+  
+  const { data: rfqsResponse, isLoading: rfqsLoading } = useRFQs(
+    rfqFilters as any, // Type assertion for now since RFQ filters differ from supplier filters
+    { field: 'publishDate', direction: 'desc' },
+    { page: 1, limit: 100 } // Get all RFQs for now
+  );
+  
+  const { data: statsResponse } = useRFQStats();
+  const updateLineItemMutation = useUpdateLineItem();
+
+  const rfqs = rfqsResponse?.success ? rfqsResponse.data?.data || [] : [];
+  const stats = statsResponse?.success ? statsResponse.data : null;
 
   const handleFilterChange = (key: keyof RFQFilters, value: string) => {
     setFilters(prev => ({
@@ -193,31 +63,30 @@ export default function RFQTracker() {
   const activeFilterCount = Object.values(filters).filter(value => value && value !== 'all').length;
 
   const handleToggleExpand = (rfqId: string) => {
-    setRfqs(prev => prev.map(rfq => 
-      rfq.id === rfqId 
-        ? { ...rfq, isExpanded: !rfq.isExpanded }
-        : rfq
-    ));
+    setExpandedRFQs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(rfqId)) {
+        newSet.delete(rfqId);
+      } else {
+        newSet.add(rfqId);
+      }
+      return newSet;
+    });
   };
 
   const handleUpdateLineItem = (rfqId: string, itemId: string, updates: Partial<LineItem>) => {
-    setRfqs(prev => prev.map(rfq => 
-      rfq.id === rfqId 
-        ? {
-            ...rfq,
-            lineItems: rfq.lineItems.map(item =>
-              item.id === itemId ? { ...item, ...updates } : item
-            ),
-            lastUpdated: new Date().toISOString().split('T')[0]
-          }
-        : rfq
-    ));
+    updateLineItemMutation.mutate({
+      rfqId,
+      lineItemId: itemId,
+      updates
+    });
   };
 
+  // Apply client-side filtering for immediate feedback (API filtering is also available)
   const filteredRFQs = rfqs.filter(rfq => {
     const searchLower = searchTerm.toLowerCase();
     
-    // Search filter
+    // Search filter (redundant with API but provides immediate feedback)
     const matchesSearch = !searchTerm || (
       rfq.rfqNo.toLowerCase().includes(searchLower) ||
       rfq.client.toLowerCase().includes(searchLower) ||
@@ -228,27 +97,28 @@ export default function RFQTracker() {
       )
     );
 
-    // Status filter
+    // Additional client-side filters for immediate feedback
     const matchesStatus = !filters.status || filters.status === 'all' || rfq.status === filters.status;
-
-    // Client filter
     const matchesClient = !filters.client || rfq.client.toLowerCase().includes(filters.client.toLowerCase());
-
-    // RFQ number filter
     const matchesRFQNo = !filters.rfqNo || rfq.rfqNo.toLowerCase().includes(filters.rfqNo.toLowerCase());
-
-    // Date range filters
     const matchesDateFrom = !filters.dateFrom || new Date(rfq.publishDate) >= new Date(filters.dateFrom);
     const matchesDateTo = !filters.dateTo || new Date(rfq.publishDate) <= new Date(filters.dateTo);
 
     return matchesSearch && matchesStatus && matchesClient && matchesRFQNo && matchesDateFrom && matchesDateTo;
   });
 
-  // Calculate stats
-  const totalItems = rfqs.reduce((acc, rfq) => acc + rfq.lineItems.length, 0);
+  // Add isExpanded property to RFQs for display
+  const displayRFQs = filteredRFQs.map(rfq => ({
+    ...rfq,
+    isExpanded: expandedRFQs.has(rfq.id)
+  }));
+
+  // Calculate stats (use API stats if available, fallback to local calculation)
+  const totalRFQs = stats?.totalRFQs ?? rfqs.length;
+  const openItems = stats ? (stats.totalLineItems - (stats.closedRFQs + stats.submittedRFQs)) : 
+    rfqs.reduce((acc, rfq) => acc + rfq.lineItems.filter(item => item.status === "open").length, 0);
   const quotesReceived = rfqs.reduce((acc, rfq) => acc + rfq.lineItems.filter(item => item.status === "quote_received").length, 0);
   const itemsCompleted = rfqs.reduce((acc, rfq) => acc + rfq.lineItems.filter(item => item.status === "closed").length, 0);
-  const openItems = rfqs.reduce((acc, rfq) => acc + rfq.lineItems.filter(item => item.status === "open").length, 0);
 
   return (
     <div className="space-y-6">
@@ -269,7 +139,7 @@ export default function RFQTracker() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total RFQs</p>
-                <p className="text-2xl font-bold text-foreground">{rfqs.length}</p>
+                <p className="text-2xl font-bold text-foreground">{totalRFQs}</p>
               </div>
               <div className="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
                 <FileText className="h-4 w-4 text-primary" />
@@ -329,7 +199,7 @@ export default function RFQTracker() {
               <div>
                 <CardTitle className="text-xl font-semibold text-foreground">RFQ Submissions</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {filteredRFQs.length} of {rfqs.length} RFQs shown
+                  {rfqsLoading ? 'Loading...' : `${filteredRFQs.length} of ${rfqs.length} RFQs shown`}
                 </p>
               </div>
               <div className="flex gap-3">
@@ -436,14 +306,22 @@ export default function RFQTracker() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {filteredRFQs.length === 0 ? (
+          {rfqsLoading ? (
+            <div className="text-center py-16">
+              <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4 animate-pulse">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-medium text-foreground mb-1">Loading RFQs...</h3>
+              <p className="text-muted-foreground">Please wait while we fetch your data</p>
+            </div>
+          ) : filteredRFQs.length === 0 ? (
             <div className="text-center py-16">
               <div className="mx-auto w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
                 <FileText className="h-8 w-8 text-muted-foreground" />
               </div>
               <h3 className="text-lg font-medium text-foreground mb-1">No RFQs found</h3>
               <p className="text-muted-foreground">
-                {searchTerm ? "Try adjusting your search terms" : "Your RFQs will appear here"}
+                {searchTerm || Object.values(filters).some(v => v) ? "Try adjusting your search terms or filters" : "Your RFQs will appear here"}
               </p>
             </div>
           ) : (
@@ -460,7 +338,7 @@ export default function RFQTracker() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredRFQs.map((rfq) => (
+                  {displayRFQs.map((rfq) => (
                     <ExpandableRFQRow
                       key={rfq.id}
                       rfq={rfq}
