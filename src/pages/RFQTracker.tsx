@@ -2,18 +2,29 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ExpandableRFQRow } from "@/components/ExpandableRFQRow";
-import { RFQFiltersDialog, RFQFilters } from "@/components/RFQFiltersDialog";
-import { Search, FileText, TrendingUp, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { Search, FileText, TrendingUp, Clock, CheckCircle, AlertCircle, X, Filter } from "lucide-react";
 import { RFQRecord, LineItem } from "@/types/rfq";
 import { useToast } from "@/hooks/use-toast";
+
+// RFQ Filters interface
+export interface RFQFilters {
+  status?: string;
+  client?: string;
+  rfqNo?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}
 
 export default function RFQTracker() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<RFQFilters>({});
+  const [showFilters, setShowFilters] = useState(false);
   const [rfqs, setRfqs] = useState<RFQRecord[]>([
     {
       id: "1",
@@ -167,6 +178,20 @@ export default function RFQTracker() {
     }
   ]);
 
+  const handleFilterChange = (key: keyof RFQFilters, value: string) => {
+    setFilters(prev => ({
+      ...prev,
+      [key]: value || undefined
+    }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({});
+  };
+
+  const hasActiveFilters = Object.values(filters).some(value => value && value !== 'all');
+  const activeFilterCount = Object.values(filters).filter(value => value && value !== 'all').length;
+
   const handleToggleExpand = (rfqId: string) => {
     setRfqs(prev => prev.map(rfq => 
       rfq.id === rfqId 
@@ -299,29 +324,115 @@ export default function RFQTracker() {
       {/* Main Content Card */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="border-b bg-muted/30">
-          <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
-            <div>
-              <CardTitle className="text-xl font-semibold text-foreground">RFQ Submissions</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {filteredRFQs.length} of {rfqs.length} RFQs shown
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search RFQs..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-80 bg-background"
-                />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+              <div>
+                <CardTitle className="text-xl font-semibold text-foreground">RFQ Submissions</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {filteredRFQs.length} of {rfqs.length} RFQs shown
+                </p>
               </div>
-              <RFQFiltersDialog
-                filters={filters}
-                onFiltersChange={setFilters}
-                onClearFilters={() => setFilters({})}
-              />
+              <div className="flex gap-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search RFQs..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 w-80 bg-background"
+                  />
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="relative"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                  {hasActiveFilters && (
+                    <span className="absolute -top-2 -right-2 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </Button>
+              </div>
             </div>
+
+            {/* Inline Filters Section */}
+            {showFilters && (
+              <div className="border-t pt-4 mt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={filters.status || 'all'}
+                      onValueChange={(value) => handleFilterChange('status', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="open">Open</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="submitted">Submitted</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="client">Client</Label>
+                    <Input
+                      id="client"
+                      placeholder="Filter by client"
+                      value={filters.client || ''}
+                      onChange={(e) => handleFilterChange('client', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="rfqNo">RFQ Number</Label>
+                    <Input
+                      id="rfqNo"
+                      placeholder="Filter by RFQ #"
+                      value={filters.rfqNo || ''}
+                      onChange={(e) => handleFilterChange('rfqNo', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dateFrom">From Date</Label>
+                    <Input
+                      id="dateFrom"
+                      type="date"
+                      value={filters.dateFrom || ''}
+                      onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="dateTo">To Date</Label>
+                    <Input
+                      id="dateTo"
+                      type="date"
+                      value={filters.dateTo || ''}
+                      onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {hasActiveFilters && (
+                  <div className="flex justify-end mt-4">
+                    <Button variant="outline" size="sm" onClick={handleClearFilters}>
+                      <X className="h-4 w-4 mr-2" />
+                      Clear All Filters
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-0">
