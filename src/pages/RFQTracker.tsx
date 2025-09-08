@@ -5,13 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ExpandableRFQRow } from "@/components/ExpandableRFQRow";
-import { Search, Filter, FileText, TrendingUp, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { RFQFiltersDialog, RFQFilters } from "@/components/RFQFiltersDialog";
+import { Search, FileText, TrendingUp, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { RFQRecord, LineItem } from "@/types/rfq";
 import { useToast } from "@/hooks/use-toast";
 
 export default function RFQTracker() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<RFQFilters>({});
   const [rfqs, setRfqs] = useState<RFQRecord[]>([
     {
       id: "1",
@@ -189,7 +191,9 @@ export default function RFQTracker() {
 
   const filteredRFQs = rfqs.filter(rfq => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    
+    // Search filter
+    const matchesSearch = !searchTerm || (
       rfq.rfqNo.toLowerCase().includes(searchLower) ||
       rfq.client.toLowerCase().includes(searchLower) ||
       rfq.lineItems.some(item => 
@@ -198,6 +202,21 @@ export default function RFQTracker() {
         item.itemId.toLowerCase().includes(searchLower)
       )
     );
+
+    // Status filter
+    const matchesStatus = !filters.status || filters.status === 'all' || rfq.status === filters.status;
+
+    // Client filter
+    const matchesClient = !filters.client || rfq.client.toLowerCase().includes(filters.client.toLowerCase());
+
+    // RFQ number filter
+    const matchesRFQNo = !filters.rfqNo || rfq.rfqNo.toLowerCase().includes(filters.rfqNo.toLowerCase());
+
+    // Date range filters
+    const matchesDateFrom = !filters.dateFrom || new Date(rfq.publishDate) >= new Date(filters.dateFrom);
+    const matchesDateTo = !filters.dateTo || new Date(rfq.publishDate) <= new Date(filters.dateTo);
+
+    return matchesSearch && matchesStatus && matchesClient && matchesRFQNo && matchesDateFrom && matchesDateTo;
   });
 
   // Calculate stats
@@ -297,10 +316,11 @@ export default function RFQTracker() {
                   className="pl-10 w-80 bg-background"
                 />
               </div>
-              <Button variant="outline" size="sm">
-                <Filter className="h-4 w-4 mr-2" />
-                Filters
-              </Button>
+              <RFQFiltersDialog
+                filters={filters}
+                onFiltersChange={setFilters}
+                onClearFilters={() => setFilters({})}
+              />
             </div>
           </div>
         </CardHeader>
