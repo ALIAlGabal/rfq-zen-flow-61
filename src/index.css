@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Clean Minimal Theme */
+    --background: 0 0% 100%;
+    --foreground: 222 16% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 16% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 16% 13%;
+
+    /* Blue Primary Accent */
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 221 83% 45%;
+
+    /* Gray Secondary */
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 222 16% 13%;
+
+    /* Muted Backgrounds */
+    --muted: 0 0% 96%;
+    --muted-foreground: 222 8% 47%;
+
+    /* Light Accent */
+    --accent: 0 0% 96%;
+    --accent-foreground: 222 16% 13%;
+
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Clean Borders */
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 221 83% 53%;
+
+    --radius: 1rem;
+
+    /* Gradients for enhanced visuals */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(220 91% 48%));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
+
+    /* Soft shadows */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+    /* Animation variables */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 16% 9%;
+    --foreground: 0 0% 98%;
+
+    --card: 222 16% 9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 222 16% 9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 221 83% 45%;
+
+    --secondary: 222 16% 19%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 222 16% 19%;
+    --muted-foreground: 222 8% 63%;
+
+    --accent: 222 16% 19%;
+    --accent-foreground: 0 0% 98%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 222 16% 19%;
+    --input: 222 16% 19%;
+    --ring: 221 83% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Custom component styles */
+  .card-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+}
