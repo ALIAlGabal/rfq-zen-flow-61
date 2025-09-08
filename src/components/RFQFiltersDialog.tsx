@@ -58,7 +58,7 @@ export function RFQFiltersDialog({ filters, onFiltersChange, onClearFilters }: R
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="relative">
           <Filter className="h-4 w-4 mr-2" />
-          Filters
+          Filter RFQs
           {hasActiveFilters && (
             <span className="absolute -top-2 -right-2 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
               {activeFilterCount}
@@ -138,7 +138,7 @@ export function RFQFiltersDialog({ filters, onFiltersChange, onClearFilters }: R
         <div className="flex gap-3">
           <Button variant="outline" onClick={handleClearFilters} className="flex-1">
             <X className="h-4 w-4 mr-2" />
-            Clear
+            Clear All
           </Button>
           <Button onClick={handleApplyFilters} className="flex-1">
             Apply Filters
